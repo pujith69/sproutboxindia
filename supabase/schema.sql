@@ -299,3 +299,66 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE POLICY "Admins can view all profiles bypass"
   ON public.profiles FOR SELECT
   USING (public.is_sprout_admin());
+
+-- ════════════════════════════════════════════════
+-- 13. Invoices
+-- ════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS public.invoices (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id        UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+  restaurant_id   UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  grower_id       UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  invoice_number  TEXT NOT NULL UNIQUE,
+  status          TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid', 'overdue', 'cancelled')),
+  subtotal        NUMERIC NOT NULL DEFAULT 0,
+  tax_amount      NUMERIC NOT NULL DEFAULT 0,
+  total_amount    NUMERIC NOT NULL DEFAULT 0,
+  currency        TEXT NOT NULL DEFAULT 'INR',
+  due_date        DATE NOT NULL,
+  paid_at         TIMESTAMPTZ,
+  notes           TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Restaurants can view own invoices"
+  ON public.invoices FOR SELECT
+  USING (auth.uid() = restaurant_id);
+
+CREATE POLICY "Growers can view invoices for their trays"
+  ON public.invoices FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.allocations a
+      JOIN public.tray_assignments ta ON a.tray_id = ta.id
+      WHERE a.order_id = invoices.order_id AND ta.grower_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Admins can manage all invoices"
+  ON public.invoices FOR ALL
+  USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+CREATE POLICY "Admins can insert invoices"
+  ON public.invoices FOR INSERT
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+-- Trigger for updated_at
+CREATE OR REPLACE FUNCTION public.update_invoice_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_invoice_updated_at ON public.invoices;
+CREATE TRIGGER update_invoice_updated_at
+  BEFORE UPDATE ON public.invoices
+  FOR EACH ROW EXECUTE FUNCTION public.update_invoice_updated_at();

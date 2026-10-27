@@ -1,3 +1,5 @@
+
+
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentProfile } from "@/lib/auth"
 import { redirect } from "next/navigation"
@@ -20,11 +22,26 @@ export default async function GrowerDashboardOverview() {
 
   const { data: allTrays } = await supabase
     .from("tray_assignments")
-    .select("status")
+    .select("id, status")
     .eq("grower_id", profile.id)
 
   const assignedCount = allTrays?.filter((t) => t.status === "assigned").length || 0
   const growingCount = allTrays?.filter((t) => t.status === "growing" || t.status === "qc_pending").length || 0
+
+  const completedTrayIds = allTrays
+    ?.filter(t => t.status === "completed" || t.status === "approved")
+    .map(t => t.id) || []
+
+  const { data: yields } = completedTrayIds.length > 0
+    ? await supabase
+        .from("yield_records")
+        .select("weight_grams, tray_id")
+        .in("tray_id", completedTrayIds)
+    : { data: [] }
+
+  const PRICE_PER_KG = 120
+  const totalYieldKg = (yields || []).reduce((s, y) => s + y.weight_grams / 1000, 0)
+  const estimatedEarnings = totalYieldKg * PRICE_PER_KG
 
   return (
     <div className="space-y-6">
@@ -33,7 +50,7 @@ export default async function GrowerDashboardOverview() {
         <p className="mt-1 text-sm text-muted-foreground">General overview and today's focused task.</p>
       </div>
 
-       <div className="grid grid-cols-2 gap-4">
+       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5">
            <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest mb-1">Incoming</p>
            <p className="text-2xl font-bold">{assignedCount} <span className="text-base font-normal text-muted-foreground">trays</span></p>
@@ -41,6 +58,13 @@ export default async function GrowerDashboardOverview() {
         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5">
            <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest mb-1">Active</p>
            <p className="text-2xl font-bold text-sprout-400">{growingCount} <span className="text-base font-normal opacity-70">trays</span></p>
+        </div>
+        <div className="col-span-2 md:col-span-1 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5">
+          <p className="text-xs text-muted-foreground uppercase font-bold tracking-widest mb-1">Est. Earnings</p>
+          <p className="text-2xl font-bold text-emerald-400">
+            ₹{estimatedEarnings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-1">{totalYieldKg.toFixed(2)} kg harvested</p>
         </div>
       </div>
 

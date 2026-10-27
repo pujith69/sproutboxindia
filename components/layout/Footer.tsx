@@ -4,10 +4,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 const footerLinks = [
-  { href: "#about", label: "About" },
   { href: "#features", label: "Features" },
-  { href: "#contact", label: "Contact" },
-  { href: "#privacy", label: "Privacy" },
+  { href: "#benefits", label: "Benefits" },
+  { href: "#how-it-works", label: "How It Works" },
+  { href: "#cta", label: "Get Started" },
 ];
 
 const socialLinks = [

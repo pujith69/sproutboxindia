@@ -60,6 +60,21 @@ export default function DemandClient({ initialOrders }: { initialOrders: any[] }
     }
   }
 
+  async function deleteOrder(id: string) {
+    setProcessing(id)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from("orders").delete().eq("id", id)
+      if (error) throw error
+      setOrders(prev => prev.filter(o => o.id !== id))
+    } catch (error) {
+      console.error(error)
+      alert("Failed to reject order")
+    } finally {
+      setProcessing(null)
+    }
+  }
+
   // Pending orders
   const pendingQueue = orders.filter(o => o.status === "pending")
 
@@ -185,9 +200,8 @@ export default function DemandClient({ initialOrders }: { initialOrders: any[] }
                         </button>
                         <button 
                           disabled={processing === order.id}
-                          onClick={() => completeOrderAction(order.id, 'rejected')} // Technically we don't have 'rejected' in CHECK constraint... Wait we only have pending, assigned_to_growers, growing, ready_for_harvest, delivered.
-                          // Actually, we can just delete it or mark it delivered/something, or we just rely on approve
-                          className="px-3 py-1.5 text-xs font-semibold rounded-md border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all opacity-50"
+                          onClick={() => deleteOrder(order.id)}
+                          className="px-3 py-1.5 text-xs font-semibold rounded-md border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
                         >
                           Reject
                         </button>

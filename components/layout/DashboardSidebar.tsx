@@ -3,14 +3,14 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
-import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  ListChecks, 
-  Users, 
-  Package, 
-  ShieldCheck, 
-  Map, 
+import {
+  LayoutDashboard,
+  TrendingUp,
+  ListChecks,
+  Users,
+  Package,
+  ShieldCheck,
+  Map,
   Truck,
   CheckSquare,
   Sprout,
@@ -19,7 +19,9 @@ import {
   ShoppingCart,
   Receipt,
   RotateCw,
-  MessageSquare
+  MessageSquare,
+  FileText,
+  BarChart3
 } from "lucide-react"
 
 export type Role = "admin" | "grower" | "restaurant"
@@ -40,6 +42,8 @@ const roleNav: Record<Role, SidebarItem[]> = {
     { name: "QC", href: "/admin/qc", icon: ShieldCheck },
     { name: "Clusters", href: "/admin/clusters", icon: Map },
     { name: "Deliveries", href: "/admin/deliveries", icon: Truck },
+    { name: "Invoices", href: "/admin/invoices", icon: FileText },
+    { name: "Reports", href: "/admin/reports", icon: BarChart3 },
   ],
   grower: [
     { name: "Today's Task", href: "/grower/dashboard", icon: LayoutDashboard },

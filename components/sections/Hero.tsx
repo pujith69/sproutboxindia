@@ -1,8 +1,10 @@
-"use client"
-
-import { motion, type Variants } from "framer-motion"
-import Link from "next/link"
-import { MotionButton } from "@/components/ui/button"
+import { motion, type Variants } from "framer-motion";
+import Link from "next/link";
+import { getVariant } from "@/lib/experiments/server";
+import { Headline } from "./HeroHeadline";
+import TrackedLink from "@/components/TrackedLink";
+import { t } from "@/lib/i18n";
+import { MotionButton } from "@/components/ui/button";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -11,9 +13,12 @@ const fadeUp: Variants = {
     y: 0,
     transition: { delay: i * 0.15, duration: 0.6, ease: "easeOut" as const },
   }),
-}
+};
 
-export default function Hero() {
+export default async function Hero() {
+  const { variant } = await getVariant("hero_headline");
+  const lang = "en";
+
   return (
     <section
       id="hero"
@@ -47,17 +52,8 @@ export default function Hero() {
           </span>
         </motion.div>
 
-        {/* Headline */}
-        <motion.h1
-          custom={1}
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          className="mt-8 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
-        >
-          Farm‑Fresh Microgreens.{" "}
-          <span className="gradient-text-sprout">Delivered to Your Kitchen.</span>
-        </motion.h1>
+        {/* Headline (A/B variant: control vs b, en/kn/hi via i18n) */}
+        <Headline variant={variant} lang={lang} />
 
         {/* Sub‑headline */}
         <motion.p
@@ -67,8 +63,7 @@ export default function Hero() {
           variants={fadeUp}
           className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl"
         >
-          SproutBox connects your restaurant to a network of local growers.
-          Place demand, and we grow it fresh — harvested and delivered within days.
+          {t("en", "hero_subhead")}
         </motion.p>
 
         {/* CTA Buttons */}
@@ -79,19 +74,29 @@ export default function Hero() {
           variants={fadeUp}
           className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
         >
-          <Link href="/login">
-            <MotionButton size="lg" variant="primary" className="h-12 rounded-xl px-8 text-base">
-              Place Your First Order
+          <TrackedLink href="/login" location="hero" ctaId="join_grower" variant={variant} lang={lang}>
+            <Link href="/login">
+              <MotionButton size="lg" variant="primary" className="h-12 rounded-xl px-8 text-base">
+                {t("en", "hero_cta_order")}
+              </MotionButton>
+            </Link>
+          </TrackedLink>
+          <TrackedLink
+            href="#how-it-works"
+            location="hero"
+            ctaId="see_how_it_works"
+            variant={variant}
+            lang={lang}
+          >
+            <MotionButton size="lg" variant="glass" className="h-12 rounded-xl px-8 text-base">
+              <a href="#how-it-works">{t("en", "hero_cta_how")}</a>
             </MotionButton>
-          </Link>
-          <MotionButton size="lg" variant="glass" className="h-12 rounded-xl px-8 text-base">
-            <a href="#how-it-works">See How It Works</a>
-          </MotionButton>
+          </TrackedLink>
         </motion.div>
       </div>
 
       {/* Bottom fade */}
       <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
     </section>
-  )
+  );
 }

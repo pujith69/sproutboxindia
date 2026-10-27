@@ -112,3 +112,32 @@ export interface Feedback {
   comment: string | null
   created_at: string
 }
+
+/* ── Invoicing Types ─────────────────────────────── */
+
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
+
+export interface Invoice {
+  id: string
+  order_id: string
+  restaurant_id: string
+  grower_id: string | null
+  invoice_number: string
+  status: InvoiceStatus
+  subtotal: number
+  tax_amount: number
+  total_amount: number
+  currency: string
+  due_date: string
+  paid_at: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface InvoiceItem {
+  crop_name: string
+  quantity_kg: number
+  price_per_kg: number
+  total: number
+}
